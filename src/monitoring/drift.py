@@ -115,11 +115,17 @@ class DriftDetector:
                 if col not in self.reference_data.columns or col not in current_data.columns:
                     continue
 
-                ref_counts = self.reference_data[col].value_counts(normalize=True)
-                cur_counts = current_data[col].value_counts(normalize=True)
+                ref_series = self.reference_data[col].dropna()
+                cur_series = current_data[col].dropna()
+                if len(ref_series) == 0 or len(cur_series) == 0:
+                    logger.warning("Skipping drift check for '%s': empty after dropna", col)
+                    continue
+
+                ref_counts = ref_series.value_counts(normalize=True)
+                cur_counts = cur_series.value_counts(normalize=True)
 
                 # Align categories
-                all_cats = set(ref_counts.index) | set(cur_counts.index)
+                all_cats = sorted(set(ref_counts.index) | set(cur_counts.index))
                 ref_aligned = np.array([ref_counts.get(c, 0) for c in all_cats])
                 cur_aligned = np.array([cur_counts.get(c, 0) for c in all_cats])
 
