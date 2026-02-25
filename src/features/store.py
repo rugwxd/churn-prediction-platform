@@ -296,6 +296,7 @@ class FeatureStore:
             "feature_names": self._feature_names,
             "fitted": self._fitted,
             "registry": self._registry,
+            "feature_views": self.feature_views,
         }
         joblib.dump(state, store_path)
         logger.info("Feature store saved to %s", store_path)
@@ -316,4 +317,8 @@ class FeatureStore:
         self._feature_names = state["feature_names"]
         self._fitted = state["fitted"]
         self._registry = state.get("registry", [])
+        self.feature_views = state.get("feature_views", {})
+        if not self.feature_views:
+            view = self.get_default_feature_view()
+            self.register_feature_view(view)
         logger.info("Feature store loaded from %s", store_path)
