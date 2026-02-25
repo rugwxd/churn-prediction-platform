@@ -98,12 +98,14 @@ class ModelServer:
         self.model_version: str = ""
         self.start_time: float = 0
         self._prediction_count: int = 0
+        self._serving_config: ServingConfig | None = None
 
     def load(self, config: ServingConfig | None = None) -> None:
         """Load model and feature store from registry."""
         if config is None:
             config = load_config().serving
 
+        self._serving_config = config
         self.model_name = config.model_name
         self.model_version = config.model_version
         self.start_time = time.time()
@@ -151,13 +153,22 @@ class ModelServer:
             timestamp=datetime.now().isoformat(),
         )
 
-    @staticmethod
-    def _risk_tier(prob: float) -> str:
-        if prob >= 0.8:
+    def _risk_tier(self, prob: float) -> str:
+        cfg = self._serving_config
+        if cfg:
+            t_crit, t_high, t_med = (
+                cfg.risk_threshold_critical,
+                cfg.risk_threshold_high,
+                cfg.risk_threshold_medium,
+            )
+        else:
+            t_crit, t_high, t_med = 0.8, 0.6, 0.3
+
+        if prob >= t_crit:
             return "critical"
-        elif prob >= 0.6:
+        elif prob >= t_high:
             return "high"
-        elif prob >= 0.3:
+        elif prob >= t_med:
             return "medium"
         return "low"
 

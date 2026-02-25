@@ -83,6 +83,9 @@ class ServingConfig(BaseModel):
     port: int = 8000
     model_name: str = "xgboost"
     model_version: str = "latest"
+    risk_threshold_critical: float = 0.8
+    risk_threshold_high: float = 0.6
+    risk_threshold_medium: float = 0.3
 
 
 class MonitoringConfig(BaseModel):
