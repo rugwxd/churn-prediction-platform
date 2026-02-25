@@ -17,7 +17,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.config import load_config, PROJECT_ROOT
+from src.config import PROJECT_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -62,28 +62,39 @@ def render_model_comparison(results: dict):
     # Metrics table
     rows = []
     for name, metrics in models.items():
-        rows.append({
-            "Model": name,
-            "AUC-ROC": metrics["auc_roc"],
-            "AUC-PR": metrics["auc_pr"],
-            "F1 Score": metrics["f1"],
-            "Precision": metrics["precision"],
-            "Recall": metrics["recall"],
-            "Train Time (s)": metrics["train_time_seconds"],
-        })
+        rows.append(
+            {
+                "Model": name,
+                "AUC-ROC": metrics["auc_roc"],
+                "AUC-PR": metrics["auc_pr"],
+                "F1 Score": metrics["f1"],
+                "Precision": metrics["precision"],
+                "Recall": metrics["recall"],
+                "Train Time (s)": metrics["train_time_seconds"],
+            }
+        )
 
     df = pd.DataFrame(rows)
-    st.dataframe(df.style.highlight_max(axis=0, subset=["AUC-ROC", "AUC-PR", "F1 Score"]),
-                  use_container_width=True)
+    st.dataframe(
+        df.style.highlight_max(axis=0, subset=["AUC-ROC", "AUC-PR", "F1 Score"]),
+        use_container_width=True,
+    )
 
     # Bar chart comparison
     metric_cols = ["AUC-ROC", "AUC-PR", "F1 Score", "Precision", "Recall"]
-    df_melted = df.melt(id_vars="Model", value_vars=metric_cols,
-                         var_name="Metric", value_name="Score")
+    df_melted = df.melt(
+        id_vars="Model", value_vars=metric_cols, var_name="Metric", value_name="Score"
+    )
 
-    fig = px.bar(df_melted, x="Metric", y="Score", color="Model",
-                  barmode="group", title="Model Metrics Comparison",
-                  color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c"])
+    fig = px.bar(
+        df_melted,
+        x="Metric",
+        y="Score",
+        color="Model",
+        barmode="group",
+        title="Model Metrics Comparison",
+        color_discrete_sequence=["#1f77b4", "#ff7f0e", "#2ca02c"],
+    )
     fig.update_layout(yaxis_range=[0, 1])
     st.plotly_chart(fig, use_container_width=True)
 
@@ -97,13 +108,19 @@ def render_feature_importance(results: dict):
         st.info("Feature importance not available.")
         return
 
-    df = pd.DataFrame(
-        list(importance.items()), columns=["Feature", "Importance"]
-    ).sort_values("Importance", ascending=True)
+    df = pd.DataFrame(list(importance.items()), columns=["Feature", "Importance"]).sort_values(
+        "Importance", ascending=True
+    )
 
-    fig = px.bar(df, x="Importance", y="Feature", orientation="h",
-                  title="Top Features by Mean |SHAP Value|",
-                  color="Importance", color_continuous_scale="blues")
+    fig = px.bar(
+        df,
+        x="Importance",
+        y="Feature",
+        orientation="h",
+        title="Top Features by Mean |SHAP Value|",
+        color="Importance",
+        color_continuous_scale="blues",
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -118,10 +135,8 @@ def render_churn_analysis(df: pd.DataFrame):
     churned_count = df["churned"].sum()
 
     if "mrr" in df.columns:
-        total_mrr = df["mrr"].sum()
         at_risk_mrr = df[df["churned"] == 1]["mrr"].sum()
     else:
-        total_mrr = 0
         at_risk_mrr = 0
 
     col1.metric("Total Users", f"{total_users:,}")
@@ -136,18 +151,28 @@ def render_churn_analysis(df: pd.DataFrame):
         if "plan_tier" in df.columns:
             churn_by_plan = df.groupby("plan_tier")["churned"].mean().reset_index()
             churn_by_plan.columns = ["Plan Tier", "Churn Rate"]
-            fig = px.bar(churn_by_plan, x="Plan Tier", y="Churn Rate",
-                          title="Churn Rate by Plan Tier",
-                          color="Churn Rate", color_continuous_scale="reds")
+            fig = px.bar(
+                churn_by_plan,
+                x="Plan Tier",
+                y="Churn Rate",
+                title="Churn Rate by Plan Tier",
+                color="Churn Rate",
+                color_continuous_scale="reds",
+            )
             st.plotly_chart(fig, use_container_width=True)
 
     with col_b:
         if "signup_channel" in df.columns:
             churn_by_channel = df.groupby("signup_channel")["churned"].mean().reset_index()
             churn_by_channel.columns = ["Channel", "Churn Rate"]
-            fig = px.bar(churn_by_channel, x="Channel", y="Churn Rate",
-                          title="Churn Rate by Signup Channel",
-                          color="Churn Rate", color_continuous_scale="reds")
+            fig = px.bar(
+                churn_by_channel,
+                x="Channel",
+                y="Churn Rate",
+                title="Churn Rate by Signup Channel",
+                color="Churn Rate",
+                color_continuous_scale="reds",
+            )
             st.plotly_chart(fig, use_container_width=True)
 
 
@@ -156,8 +181,12 @@ def render_feature_distributions(df: pd.DataFrame):
     st.header("Feature Distributions")
 
     numerical_features = [
-        "login_frequency", "avg_session_duration_min", "feature_usage_score",
-        "days_since_last_login", "support_tickets_total", "monthly_active_days",
+        "login_frequency",
+        "avg_session_duration_min",
+        "feature_usage_score",
+        "days_since_last_login",
+        "support_tickets_total",
+        "monthly_active_days",
     ]
 
     available = [f for f in numerical_features if f in df.columns]
@@ -172,14 +201,59 @@ def render_feature_distributions(df: pd.DataFrame):
             feat = available[idx]
             with col:
                 fig = px.histogram(
-                    df, x=feat, color="churned",
-                    nbins=40, barmode="overlay", opacity=0.7,
+                    df,
+                    x=feat,
+                    color="churned",
+                    nbins=40,
+                    barmode="overlay",
+                    opacity=0.7,
                     title=feat.replace("_", " ").title(),
                     color_discrete_map={0: "#2ca02c", 1: "#d62728"},
                     labels={"churned": "Churned"},
                 )
                 fig.update_layout(height=300, showlegend=False)
                 st.plotly_chart(fig, use_container_width=True)
+
+
+def render_correlation_heatmap(df: pd.DataFrame):
+    """Render feature correlation heatmap."""
+    st.header("Feature Correlations")
+
+    numerical_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    if len(numerical_cols) < 2:
+        st.info("Not enough numerical features for correlation analysis.")
+        return
+
+    corr = df[numerical_cols].corr()
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=corr.values,
+            x=corr.columns,
+            y=corr.columns,
+            colorscale="RdBu_r",
+            zmid=0,
+            text=np.round(corr.values, 2),
+            texttemplate="%{text}",
+            textfont={"size": 9},
+        )
+    )
+    fig.update_layout(
+        title="Pearson Correlation Matrix",
+        height=600,
+        xaxis_tickangle=-45,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Highlight strongest correlations with churn
+    if "churned" in corr.columns:
+        churn_corr = corr["churned"].drop("churned").abs().sort_values(ascending=False)
+        st.subheader("Top Churn Correlates")
+        st.dataframe(
+            churn_corr.reset_index()
+            .rename(columns={"index": "Feature", "churned": "|Correlation|"})
+            .head(10),
+            use_container_width=True,
+        )
 
 
 def render_drift_monitoring():
@@ -213,13 +287,15 @@ def render_drift_monitoring():
     if features:
         rows = []
         for feat, info in features.items():
-            rows.append({
-                "Feature": feat,
-                "Type": info.get("type", ""),
-                "Statistic": round(info.get("statistic", 0), 4),
-                "P-Value": round(info.get("p_value", 0), 4),
-                "Drift": "Yes" if info.get("drift_detected") else "No",
-            })
+            rows.append(
+                {
+                    "Feature": feat,
+                    "Type": info.get("type", ""),
+                    "Statistic": round(info.get("statistic", 0), 4),
+                    "P-Value": round(info.get("p_value", 0), 4),
+                    "Drift": "Yes" if info.get("drift_detected") else "No",
+                }
+            )
 
         drift_df = pd.DataFrame(rows)
         st.dataframe(drift_df, use_container_width=True)
@@ -253,21 +329,23 @@ def render_prediction_simulator(df: pd.DataFrame):
     risk_score = max(0, min(1, risk_score))
 
     # Display gauge
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=risk_score * 100,
-        title={"text": "Churn Risk Score"},
-        gauge={
-            "axis": {"range": [0, 100]},
-            "bar": {"color": "darkblue"},
-            "steps": [
-                {"range": [0, 30], "color": "#d4edda"},
-                {"range": [30, 60], "color": "#fff3cd"},
-                {"range": [60, 80], "color": "#f8d7da"},
-                {"range": [80, 100], "color": "#721c24"},
-            ],
-        },
-    ))
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=risk_score * 100,
+            title={"text": "Churn Risk Score"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "darkblue"},
+                "steps": [
+                    {"range": [0, 30], "color": "#d4edda"},
+                    {"range": [30, 60], "color": "#fff3cd"},
+                    {"range": [60, 80], "color": "#f8d7da"},
+                    {"range": [80, 100], "color": "#721c24"},
+                ],
+            },
+        )
+    )
     fig.update_layout(height=300)
     st.plotly_chart(fig, use_container_width=True)
 
@@ -286,13 +364,16 @@ def main():
         return
 
     # Tabs for different views
-    tabs = st.tabs([
-        "Model Performance",
-        "Churn Analysis",
-        "Feature Distributions",
-        "Drift Monitoring",
-        "Prediction Simulator",
-    ])
+    tabs = st.tabs(
+        [
+            "Model Performance",
+            "Churn Analysis",
+            "Feature Distributions",
+            "Correlations",
+            "Drift Monitoring",
+            "Prediction Simulator",
+        ]
+    )
 
     with tabs[0]:
         if results:
@@ -310,9 +391,13 @@ def main():
             render_feature_distributions(df)
 
     with tabs[3]:
-        render_drift_monitoring()
+        if df is not None:
+            render_correlation_heatmap(df)
 
     with tabs[4]:
+        render_drift_monitoring()
+
+    with tabs[5]:
         if df is not None:
             render_prediction_simulator(df)
 
