@@ -1,0 +1,36 @@
+services:
+  api:
+    build: .
+    command: python scripts/serve.py --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  dashboard:
+    build: .
+    command: streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    depends_on:
+      - api
+
+  train:
+    build: .
+    command: python scripts/train.py
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    profiles:
+      - train
