@@ -172,7 +172,7 @@ churn-prediction-platform/
 ### Installation
 
 ```bash
-git clone https://github.com/rugwxd/churn-prediction-platform.git
+git clone https://github.com/rugwed9/churn-prediction-platform.git
 cd churn-prediction-platform
 
 python -m venv venv
